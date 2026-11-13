@@ -1,4 +1,4 @@
-const V='ny-b52c44c6c7',A=["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-512.png", "vendor/pdf.min.js", "vendor/pdf.worker.min.js", "fonts/Caveat-500.woff2", "fonts/Caveat-600.woff2", "fonts/IBMPlexMono-400.woff2", "fonts/IBMPlexMono-500.woff2", "fonts/NotoSerifSC-500.woff2", "fonts/NotoSerifSC-700.woff2"];
+const V='ny-c2101c544a',A=["./", "index.html", "manifest.webmanifest", "icon-180.png", "icon-512.png", "vendor/pdf.min.js", "vendor/pdf.worker.min.js", "fonts/Caveat-500.woff2", "fonts/Caveat-600.woff2", "fonts/IBMPlexMono-400.woff2", "fonts/IBMPlexMono-500.woff2", "fonts/NotoSerifSC-500.woff2", "fonts/NotoSerifSC-700.woff2"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(A)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
