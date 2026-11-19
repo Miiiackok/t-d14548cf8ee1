@@ -2,6 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<meta name="nytrip-version" content="2026-11-19-evening-2">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="纽约行"><meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f2f3e8">
@@ -237,7 +238,12 @@ button,textarea,input{font:inherit;color:inherit}
     async delete(id){await tx(idb,'blobs','readwrite',s=>s.delete(id));if(urls[id]){URL.revokeObjectURL(urls[id]);delete urls[id]}return {deleted:true}}};
   const ready=(async()=>{idb=await open();mem=await all(idb,'docs');(await all(idb,'blobs')).forEach((b,id)=>{urls[id]=URL.createObjectURL(b)});try{await navigator.storage?.persist?.()}catch(e){}})();
   window.claude={use:async n=>{await ready;return n==='db'?db:n==='assets'?assets:null}};
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  if('serviceWorker' in navigator) {
+    const updateWorker=()=>navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});
+    window.addEventListener('online',updateWorker);
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateWorker()});
+  }
 })();
 </script>
 
