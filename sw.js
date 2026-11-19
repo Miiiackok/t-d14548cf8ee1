@@ -1,4 +1,4 @@
-const VERSION = 'nytrip-network-20261119-2';
+const VERSION = 'nytrip-network-20261119-3';
 const SCOPE = self.registration.scope;
 const INDEX = new URL('index.html', SCOPE).href;
 const ASSETS = [
@@ -39,8 +39,10 @@ self.addEventListener('activate', event => {
     // A tab running the old HTML has no update listener. Reload it once when
     // this worker replaces the cache-first worker, preserving its route.
     const windows = await self.clients.matchAll({type: 'window'});
-    await Promise.allSettled(windows.filter(client => client.url.startsWith(SCOPE))
-      .map(client => client.navigate(client.url)));
+    // Navigation dispatches a fetch to this worker. Do not await navigation
+    // inside activation: fetch events wait for activation to finish.
+    windows.filter(client => client.url.startsWith(SCOPE))
+      .forEach(client => { client.navigate(client.url).catch(() => {}); });
   })());
 });
 
