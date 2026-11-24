@@ -1,4 +1,4 @@
-const VERSION = 'nytrip-network-20261119-3';
+const VERSION = 'nytrip-network-20261124-edit-1';
 const SCOPE = self.registration.scope;
 const INDEX = new URL('index.html', SCOPE).href;
 const ASSETS = [
