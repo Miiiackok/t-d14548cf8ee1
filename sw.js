@@ -1,82 +1,37 @@
-const VERSION = 'nytrip-network-20261124-esb-ticket-1';
-const SCOPE = self.registration.scope;
-const INDEX = new URL('index.html', SCOPE).href;
-const ASSETS = [
-  'manifest.webmanifest', 'icon-180.png', 'icon-512.png',
-  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js',
-  'fonts/Caveat-500.woff2', 'fonts/Caveat-600.woff2',
-  'fonts/IBMPlexMono-400.woff2', 'fonts/IBMPlexMono-500.woff2',
-  'fonts/NotoSerifSC-500.woff2', 'fonts/NotoSerifSC-700.woff2'
-];
+const publicCache = 'travel-account-shell-v2';
+const root = new URL('./', self.registration.scope);
+const publicPaths = new Set([
+  '', 'index.html', 'trip.html', 'legacy.html', 'transfer.js', 'calendar-account.js', 'trip-account.js',
+  'calendar-tools.js','transport-stickers.js','transport-stickers.webp','transport-stickers-extra.webp','calendar-view.js','drawn-draft.js','circle-draft.js','share.html','share-panel.js','shared-view.js',
+  'itinerary.js', 'cloud.js', 'config.js', 'migration.js', 'trip-form.js', 'places.json', 'manifest.webmanifest'
+]);
 
-async function cachePage(cache, response) {
-  await cache.put(INDEX, response.clone());
-  await cache.put(new URL('./', SCOPE).href, response.clone());
-}
-
-self.addEventListener('install', event => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(VERSION);
-    const index = await fetch(new Request(INDEX, {cache: 'no-store'}));
-    if (!index.ok) throw new Error('The latest itinerary could not be downloaded.');
-    await cachePage(cache, index);
-    await Promise.allSettled(ASSETS.map(async asset => {
-      const url = new URL(asset, SCOPE).href;
-      const response = await fetch(new Request(url, {cache: 'no-store'}));
-      if (response.ok) await cache.put(url, response);
-    }));
-    await self.skipWaiting();
-  })());
-});
-
+self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    const ownedOldCaches = new Set(['ny-c2101c544a', 'ny-evening-20261119']);
-    await Promise.all((await caches.keys()).filter(name =>
-      ownedOldCaches.has(name) || (name.startsWith('nytrip-network-') && name !== VERSION)
-    ).map(name => caches.delete(name)));
+    const old = (await caches.keys()).filter(name => name.startsWith('nytrip-network-') || name === 'travel-account-shell-v1' ||
+      ['ny-c2101c544a','ny-evening-20261119'].includes(name));
+    await Promise.all(old.map(name => caches.delete(name)));
     await self.clients.claim();
-    // A tab running the old HTML has no update listener. Reload it once when
-    // this worker replaces the cache-first worker, preserving its route.
-    const windows = await self.clients.matchAll({type: 'window'});
-    // Navigation dispatches a fetch to this worker. Do not await navigation
-    // inside activation: fetch events wait for activation to finish.
-    windows.filter(client => client.url.startsWith(SCOPE))
-      .forEach(client => { client.navigate(client.url).catch(() => {}); });
   })());
 });
 
 self.addEventListener('fetch', event => {
-  const request = event.request;
-  const url = new URL(request.url);
-  if (request.method !== 'GET' || url.origin !== self.location.origin ||
-      !url.href.startsWith(SCOPE)) return;
-  const isPage = request.mode === 'navigate' || url.pathname === new URL(INDEX).pathname;
-  if (isPage) {
-    // Always ask the network for the itinerary. HTTP errors and network
-    // failures fall back to the last working copy for offline travel.
-    event.respondWith((async () => {
-      const cache = await caches.open(VERSION);
-      try {
-        const response = await fetch(new Request(request, {cache: 'no-store'}));
-        if (!response.ok) throw new Error('Page unavailable');
-        try { await cachePage(cache, response); } catch (_) {}
-        return response;
-      } catch (_) {
-        const offline = await cache.match(INDEX);
-        return offline || new Response('离线行程暂不可用，请联网后重试。', {
-          status: 503, headers: {'Content-Type': 'text/plain; charset=utf-8'}
-        });
-      }
-    })());
-    return;
-  }
+  const url = new URL(event.request.url);
+  if (event.request.method !== 'GET' || !url.href.startsWith(root.href)) return;
+  const relative = url.pathname.slice(root.pathname.length);
+  if (!publicPaths.has(relative)) return;
+
   event.respondWith((async () => {
-    const cache = await caches.open(VERSION);
-    const saved = await cache.match(request);
-    if (saved) return saved;
-    const response = await fetch(request);
-    if (response.ok) { try { await cache.put(request, response.clone()); } catch (_) {} }
-    return response;
+    const cache = await caches.open(publicCache);
+    const key = new URL(url.pathname, root).href;
+    try {
+      const response = await fetch(event.request, {cache:'no-store'});
+      if (response.ok) await cache.put(key, response.clone()).catch(() => {});
+      return response;
+    } catch {
+      return await cache.match(key) ||
+        new Response('请联网后打开旅行日历。', {status:503, headers:{'Content-Type':'text/plain; charset=utf-8'}});
+    }
   })());
 });

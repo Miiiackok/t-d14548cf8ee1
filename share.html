@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>分享的旅行行程</title>
+  <style>
+    :root{--paper:#f8f6ee;--ink:#26352d;--soft:#59655b;--line:#dddcd0;--sheet:#fdfcf7;--marker:#c6ef5c}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,sans-serif}
+    main{width:min(100% - 36px,850px);margin:45px auto 36px}
+    h1,h2,p{margin:0}
+    h1{font:700 clamp(31px,6vw,48px)/1.15 "Songti SC","Noto Serif CJK SC",serif;letter-spacing:.035em}
+    .intro{margin-top:11px;color:var(--soft)}
+    .calendar{margin-top:27px;background:var(--sheet);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .month{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px}
+    .month h2{font-size:21px;font-variant-numeric:tabular-nums}
+    button,a{color:inherit}
+    .month button{background:transparent;border:1px solid var(--line);border-radius:50%;width:44px;height:44px;font-size:24px;cursor:pointer}
+    .month button:hover{background:#efeee5}
+    .weekdays,.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+    .weekdays span{text-align:center;color:var(--soft);font-size:13px;padding:7px 0}
+    .week{--mark-lane-height:18px;--extra-mark-space:calc(var(--extra-mark-lanes,0) * var(--mark-lane-height));position:relative;border-top:1px solid var(--line);min-height:calc(82px + var(--extra-mark-space))}
+    .day{min-width:0;padding:7px 10px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+    .day:nth-child(7){border-right:0}
+    .overflow-day{color:#656c60;background:#f6f5ee}
+    .mark{position:absolute;z-index:1;left:calc(100% / 7 * var(--start) + 3px);width:calc(100% / 7 * var(--length) - 6px);top:calc(11px + var(--lane) * var(--mark-lane-height));height:19px}
+    .mark::before{content:"";position:absolute;inset:0;background:var(--trip-color);clip-path:polygon(1% 10%,99% 0,100% 39%,99% 93%,2% 100%,0 63%)}
+    .mark:hover::before{filter:saturate(1.25)}
+    .mark:focus-visible,.month button:focus-visible,.trip:focus-visible{outline:2px solid #426036;outline-offset:2px}
+    .trips{display:grid;gap:8px;margin-top:21px}
+    .trip{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--sheet);text-decoration:none}
+    .trip:hover{border-color:#8e9982}
+    .trip strong{flex:1}
+    .trip span{color:var(--soft);font-variant-numeric:tabular-nums}
+    .swatch{width:17px;height:8px;border-radius:2px;background:var(--trip-color)}
+    @media(max-width:520px){main{width:calc(100% - 24px);margin-top:27px}.calendar{margin-top:21px}.month{padding:10px}.day{padding:6px;font-size:13px}.week{min-height:calc(70px + var(--extra-mark-space))}.mark{top:calc(9px + var(--lane) * var(--mark-lane-height));height:17px}}
+
+    [hidden]{display:none!important}
+    .auth{margin-top:20px;width:min(100%,470px);padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--sheet)}
+    .auth label{display:block;margin:12px 0 3px}
+    .auth input{width:100%;min-height:44px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;font:inherit}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .actions button,.actions label{min-height:44px;padding:0 12px;border:1px solid var(--line);background:var(--sheet);border-radius:7px;font:inherit;cursor:pointer}
+    .actions button:first-child{background:var(--marker)}
+    .account-actions{justify-content:flex-end}
+    .place-options{list-style:none;margin:3px 0 8px;padding:0;max-height:168px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+    .place-options li{cursor:pointer;padding:8px 10px;border-bottom:1px solid var(--line)}
+    .place-options li:last-child{border-bottom:0}
+    .place-options li:hover,.place-options li[aria-selected=true]{background:#e9efda}
+    .place-options small{margin-left:8px;font-size:12px;color:var(--soft)}
+    .field-optional{color:var(--soft);font-size:13px;margin-left:4px}
+    .draft-panel textarea{display:block;width:100%;min-height:76px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;color:var(--ink);font:inherit;resize:vertical}
+    .circle-link-label{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+    .circle-link-label a{color:#52683d;font-size:13px;text-underline-offset:2px}
+    #trip-city[readonly]{background:#f0efe8}
+    #app-message{margin-top:10px;color:var(--soft)}
+    .share-dialog{width:min(calc(100% - 30px),500px);padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);color:var(--ink)}
+    .share-dialog::backdrop{background:#26352d88}
+    .share-head{display:flex;justify-content:space-between;align-items:center}
+    .share-head button,#active-shares button{min-height:44px;padding:0 10px;background:transparent;border:1px solid var(--line);border-radius:7px;font:inherit}
+    .share-scope{margin:8px 0 14px;color:var(--soft);font-size:14px}
+    .share-dialog fieldset{display:grid;gap:6px;border:1px solid var(--line);border-radius:7px;margin:0 0 10px;padding:8px}
+    .share-dialog label:not(.share-recipient){min-height:36px}
+    .share-dialog input:not([type=radio]){width:100%;min-height:42px;border:1px solid var(--line);border-radius:7px;padding:5px 9px;font:inherit}
+    #active-shares{list-style:none;padding:0}
+    #active-shares li{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;overflow-wrap:anywhere}
+    .attribution{font-size:12px;color:var(--soft)}
+    .trips:empty{display:none}
+
+    #shared-days{display:grid;gap:12px;margin-top:20px}
+    #shared-days section{padding:12px 16px;border:1px solid var(--line);border-radius:9px;background:var(--sheet)}
+    #shared-days h2{font-size:19px} #shared-days ul{padding:0;list-style:none}
+    #shared-days li{display:flex;gap:14px;padding:7px 0;border-bottom:1px solid var(--line)}
+    #shared-days li span{flex:0 0 6em;font-variant-numeric:tabular-nums;color:var(--soft)}
+  </style><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"></head><body>
+    <main><h1>分享的旅行行程</h1><p id="shared-status" role="status">正在打开分享链接…</p>
+    <form id="shared-login" class="auth" hidden><h2>获邀账号登录</h2>
+      <label for="shared-email">邮箱</label><input id="shared-email" name="email" type="email" autocomplete="username" required>
+      <label for="shared-password">密码</label><input id="shared-password" name="password" type="password" autocomplete="current-password" required>
+      <div class="actions"><button type="submit">登录</button></div>
+    </form><div id="shared-days"></div></main><script type="module" src="./shared-view.js"></script></body></html>
