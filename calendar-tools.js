@@ -39,7 +39,7 @@ export const toolCss = `
   .drawing-status{margin:6px 0;color:var(--soft);font-size:14px}
   .pending-marker{display:flex;align-items:center;gap:10px;min-height:50px;margin-top:12px;padding:2px 10px 2px 13px;border:1px dashed #adb89a;border-radius:10px}
   .pending-marker button{margin-left:auto;min-height:40px}
-  .week button.day{width:100%;display:flex;flex-direction:column;align-items:flex-start;padding:4px clamp(3px,1vw,10px) 6px;border:0;border-right:1px solid var(--line);text-align:left;background:transparent;color:inherit;font:inherit;cursor:default;user-select:none}
+  .week button.day{width:100%;min-height:0;display:flex;flex-direction:column;align-items:flex-start;padding:4px clamp(3px,1vw,10px) 3px;border:0;border-right:1px solid var(--line);text-align:left;background:transparent;color:inherit;font:inherit;cursor:default;user-select:none}
   .week button.day:nth-child(7){border-right:0}
   .week button.overflow-day{background:#f6f5ee;color:#656c60}
   .day-top{display:flex;align-items:center;gap:2px;width:100%;height:33px;flex:none}
@@ -51,12 +51,11 @@ export const toolCss = `
     mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 36'%3E%3Cpath d='M32 7.5 C27.3 2.2 18 1.7 11.2 5.8 C3.8 10.3 1.5 20.9 6.1 27.8 C11.4 35.1 23.3 33.6 31.1 28.3 C37.3 24 39 16.7 35.2 12.7' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'/%3E%3Cpath d='M4.5 23.2 Q6.6 34.5 19.2 33.2' fill='none' stroke='black' stroke-opacity='.35' stroke-width='.8' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat
   }
   .circle-draft .day-num::after{opacity:.75}
-  .day-writing{display:grid;gap:5px;width:100%;margin-top:calc(5px + var(--extra-mark-space));color:#697066;font:400 11px/1.28 "PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif}
-  .day-places{display:grid;gap:3px}
-  .day-place,.day-memo{overflow-wrap:anywhere}
-  .day-place{position:relative;padding-inline-start:7px}
-  .day-place::before{content:"";position:absolute;inset-inline-start:0;top:.5em;width:3px;height:3px;border-radius:50%;background:#879083}
-  .day-memo{display:-webkit-box;overflow:hidden;color:#8c4945;white-space:pre-line;-webkit-box-orient:vertical;-webkit-line-clamp:4}
+  .day-writing{display:grid;gap:2px;width:100%;min-height:0;margin-top:calc(3px + var(--extra-mark-space));overflow:hidden;color:#657062;font:400 10px/11px "Calendar Hand","Kaiti SC",KaiTi,STKaiti,system-ui,sans-serif}
+  .day-places{display:grid;grid-template-columns:minmax(0,1fr)}
+  .day-place{position:relative;padding-inline-start:7px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+  .day-place::before{content:"";position:absolute;inset-inline-start:0;top:.42em;width:3px;height:3px;border-radius:50%;background:#879083}
+  .day-memo{display:-webkit-box;overflow:hidden;overflow-wrap:anywhere;color:#8c4945;white-space:pre-line;-webkit-box-orient:vertical;-webkit-line-clamp:var(--memo-lines,4)}
   .week button.important{cursor:pointer}
   .calendar-body{position:relative}
   .pencil-trace{position:absolute;inset:0;z-index:3;pointer-events:none;width:100%;height:100%}
@@ -79,7 +78,7 @@ export const toolCss = `
     .day-top{height:29px;gap:1px}
     .day-num{width:17px;height:24px}
     .important .day-num::after,.circle-draft .day-num::after{width:30px;height:29px}
-    .day-writing{font-size:9.5px}
+    .day-writing{font-size:9px;line-height:10px}
     .day-place{padding-inline-start:6px}
   }
 `;

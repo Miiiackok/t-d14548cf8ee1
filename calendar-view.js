@@ -63,6 +63,7 @@ export function makeCalendar({readTrips,readCircles,readStickers,readCircleDraft
       writing.className = 'day-writing';
       writing.setAttribute('aria-hidden','true');
       if (memo) {
+        writing.style.setProperty('--memo-lines',4-places.length);
         const note = document.createElement('span');
         note.className = 'day-memo';
         note.textContent = memo;
@@ -93,7 +94,7 @@ export function makeCalendar({readTrips,readCircles,readStickers,readCircleDraft
       for (const character of day+'|'+place) hash = Math.imul(hash ^ character.codePointAt(0),16777619);
       return hash >>> 0;
     }
-    return [...choices].sort((a,b)=>rank(a)-rank(b)).slice(0,2);
+    return [...choices].sort((a,b)=>rank(a)-rank(b)).slice(0,3);
   }
   function markWeeks(month,trips,circles,tools) {
     const year = shownMonth.getUTCFullYear();

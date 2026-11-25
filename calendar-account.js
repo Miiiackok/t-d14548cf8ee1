@@ -9,8 +9,10 @@ import { makeCircleDraft } from './circle-draft.js';
 import { setupSharePanel } from './share-panel.js';
 
 const legacyTripId = 'ce5415bd-64d3-45df-aecc-6ff00987d50e';
-const legacyBookmark = /^#(?:all|wallet|todo|plans|d(?:2[6-9]|3[01]))$/.test(location.hash) ? location.hash : '';
-const setupRequested = new URLSearchParams(location.search).get('account') === 'setup';
+const urlOptions = new URLSearchParams(location.search);
+const migrationRequested = urlOptions.get('migration') === '1';
+const legacyBookmark = !migrationRequested && /^#(?:all|wallet|todo|plans|d(?:2[6-9]|3[01]))$/.test(location.hash) ? location.hash : '';
+const setupRequested = urlOptions.get('account') === 'setup';
 const auth = document.querySelector('#account');
 const setupForm = document.querySelector('#account-setup');
 const message = document.querySelector('#app-message');
@@ -92,7 +94,7 @@ async function renderAccount(session) {
   toolbar.hidden = !user;
   controls.hidden = !user;
   tripList.hidden = !user;
-  importer.closest('label').hidden = !user || user.id !== migrationOwner;
+  importer.closest('label').hidden = !migrationRequested || !user || user.id !== migrationOwner;
   if (user) await loadTrips();
 }
 
@@ -136,7 +138,7 @@ async function loadTrips() {
       view.showDate(next.start,true);
     }
     view.render();
-    message.textContent = legacyBookmark && accountId===migrationOwner
+    message.textContent = migrationRequested && accountId===migrationOwner && !records.some(record=>record.id===legacyTripId)
       ? '请在原先保存照片的浏览器迁入旧行程。'
       : !stickers ? '暂时无法读取交通贴纸。' : !places ? '暂时无法读取计划地点。' : '';
   } catch {

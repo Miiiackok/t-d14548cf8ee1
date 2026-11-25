@@ -3,7 +3,7 @@ const root = new URL('./', self.registration.scope);
 const publicPaths = new Set([
   '', 'index.html', 'trip.html', 'legacy.html', 'transfer.js', 'calendar-account.js', 'trip-account.js',
   'calendar-tools.js','transport-stickers.js','transport-stickers.webp','transport-stickers-extra.webp','calendar-view.js','drawn-draft.js','circle-draft.js','share.html','share-panel.js','shared-view.js',
-  'itinerary.js', 'cloud.js', 'config.js', 'migration.js', 'trip-form.js', 'places.json', 'manifest.webmanifest'
+  'itinerary.js', 'cloud.js', 'config.js', 'migration.js', 'trip-form.js', 'places.json', 'calendar-hand.woff2', 'manifest.webmanifest'
 ]);
 
 self.addEventListener('install', event => event.waitUntil(self.skipWaiting()));
