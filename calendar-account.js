@@ -1,4 +1,4 @@
-import { client, createTrip, listTrips, listImportantDays, setImportantDay, listTransportStickers, setTransportSticker, migrationOwner } from './cloud.js';
+import { client, createTrip, listTrips, listCalendarPlaces, listImportantDays, setImportantDay, listTransportStickers, setTransportSticker, migrationOwner } from './cloud.js';
 import { allowRegistration } from './config.js';
 import { markerColors } from './trip-form.js';
 import { makeCalendar } from './calendar-view.js';
@@ -99,8 +99,8 @@ async function loadTrips() {
   if (!accountId) return;
   const request = ++requests;
   try {
-    const [records,important,stickers] = await Promise.all([
-      listTrips(),listImportantDays(),listTransportStickers().catch(()=>null)
+    const [records,important,stickers,places] = await Promise.all([
+      listTrips(),listImportantDays(),listTransportStickers().catch(()=>null),listCalendarPlaces().catch(()=>null)
     ]);
     if (request !== requests) return;
     if (legacyBookmark && records.some(record=>record.id===legacyTripId)) {
@@ -112,6 +112,12 @@ async function loadTrips() {
     }
     circles = new Map(important.map(details=>[details.day,details]));
     if (stickers) transportDays = groupStickers(stickers);
+    const placesByTrip = new Map();
+    for (const {trip_id,day,name} of places || []) {
+      if (!placesByTrip.has(trip_id)) placesByTrip.set(trip_id,Object.create(null));
+      const days = placesByTrip.get(trip_id);
+      (days[day] ??= []).push(name);
+    }
     trips = records.map(record => ({
       id: record.id,
       name: record.name,
@@ -120,6 +126,7 @@ async function loadTrips() {
       color: record.color,
       country_code: record.country_code,
       city: record.city,
+      placesByDay: placesByTrip.get(record.id),
       url: './trip.html?id=' + record.id + '#all'
     }));
     if (!view.hasChosenMonth() && trips.length) {
@@ -130,7 +137,7 @@ async function loadTrips() {
     view.render();
     message.textContent = legacyBookmark && accountId===migrationOwner
       ? '请在原先保存照片的浏览器迁入旧行程。'
-      : stickers ? '' : '暂时无法读取交通贴纸。';
+      : !stickers ? '暂时无法读取交通贴纸。' : !places ? '暂时无法读取计划地点。' : '';
   } catch {
     if (request === requests) message.textContent = '暂时无法读取旅行，请检查网络后重试。';
   }

@@ -36,7 +36,10 @@ create table if not exists public.travel_important_days (
 
 alter table public.travel_important_days
   add column if not exists time_at time,
-  add column if not exists note text not null default '' check (char_length(note)<=2000);
+  add column if not exists note text not null default '' check (char_length(note)<=2000),
+  add column if not exists link text not null default ''
+    check (char_length(link)<=2000 and (link='' or link ~* '^https?://')),
+  add column if not exists place text not null default '' check (char_length(place)<=200);
 
 create table if not exists public.travel_transport_stickers (
   owner_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -90,6 +93,42 @@ drop policy if exists travel_shares_owner on public.travel_shares;
 create policy travel_shares_owner on public.travel_shares for all to authenticated
   using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
+
+-- An account's scheduled locations for the month view, using its existing RLS.
+create or replace function public.travel_calendar_places()
+returns table(trip_id uuid, day text, name text)
+language sql stable security invoker set search_path = '' as $$
+  with trips as (
+    select id, start_date, end_date, case
+      when pg_catalog.jsonb_typeof(itinerary->'days')='array' then itinerary->'days'
+      else '[]'::jsonb end as days
+    from public.travel_trips where owner_id=(select auth.uid())
+  ), days as (
+    select trip.id, day->>'id' as day_id, day->>'date' as date, day->'stops' as stops
+    from trips as trip cross join lateral pg_catalog.jsonb_array_elements(trip.days) as day
+    union all
+    select trip.id, 'day-'||date::date::text, date::date::text, '[]'::jsonb
+    from trips as trip cross join lateral
+      pg_catalog.generate_series(trip.start_date::timestamp,trip.end_date::timestamp,'1 day'::interval) as date
+    where pg_catalog.jsonb_array_length(trip.days)=0
+  ), places as (
+    select days.id, coalesce(moved.date,days.date) as date, coalesce(edit.value->>'name',stop->>'n') as name
+    from days cross join lateral pg_catalog.jsonb_array_elements(
+      case when pg_catalog.jsonb_typeof(days.stops)='array' then days.stops else '[]'::jsonb end
+    ) as stop
+    left join public.travel_items as edit on edit.trip_id=days.id and edit.path='stopEdits/'||(stop->>'stopId')
+    left join days as moved on moved.id=days.id and moved.day_id=edit.value->>'day'
+    where coalesce(nullif(edit.value->>'address',''),nullif(stop->>'addr',''),nullif(stop->>'q','')) is not null
+    union all
+    select days.id,days.date,item.value->>'name'
+    from days join public.travel_items as item on item.trip_id=days.id and item.path like 'plans/%'
+      and item.value->>'day'=days.day_id
+  )
+  select distinct places.id,places.date,pg_catalog.btrim(places.name)
+  from places where places.date is not null and pg_catalog.btrim(places.name)<>''
+$$;
+revoke all on function public.travel_calendar_places() from public;
+grant execute on function public.travel_calendar_places() to authenticated;
 
 -- The share token is the only public entry point. Return an allowlist of
 -- display fields, even if the owner's itinerary contains notes or attachments.

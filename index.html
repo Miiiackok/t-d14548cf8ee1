@@ -212,6 +212,13 @@
         <input id="circle-time" name="time" type="time">
         <label for="circle-note">备注 <span class="field-optional">选填</span></label>
         <textarea id="circle-note" name="note" rows="3" maxlength="2000" placeholder="为这一天记下重要的事"></textarea>
+        <div class="circle-link-label">
+          <label for="circle-link">链接 <span class="field-optional">选填</span></label>
+          <a id="open-circle-link" target="_blank" rel="noopener noreferrer" hidden>打开链接</a>
+        </div>
+        <input id="circle-link" name="link" type="url" maxlength="2000" pattern="[Hh][Tt][Tt][Pp][Ss]?://.+" title="填写以 http:// 或 https:// 开头的链接" placeholder="https://…">
+        <label for="circle-place">地点 <span class="field-optional">选填</span></label>
+        <input id="circle-place" name="place" type="text" maxlength="200" placeholder="地点名称或地址">
         <div class="actions"><button type="submit" class="save-draft" aria-label="保存重要日期">✓</button>
           <button type="button" id="cancel-circle">取消</button><button type="button" id="remove-circle" hidden>移除圆圈</button></div>
         <p role="status"></p>

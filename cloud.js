@@ -27,12 +27,27 @@ export const updateTrip = async (id, fields) => checked(await tripTable()
   .update(fields).eq('id', id).select().single());
 
 export const listImportantDays = async () => checked(await client.from('travel_important_days')
-  .select('day,time_at,note').order('day')).map(row=>({day:row.day,time:row.time_at,note:row.note}));
+  .select('day,time_at,note,link,place').order('day'))
+  .map(({day,time_at,note,link,place})=>({day,time:time_at,note,link,place}));
 
 export async function setImportantDay(day, details) {
   const table=client.from('travel_important_days');
-  if (details) checked(await table.upsert({day,time_at:details.time,note:details.note},{onConflict:'owner_id,day'}));
+  if (details) {
+    const {time,note,link,place} = details;
+    checked(await table.upsert({day,time_at:time,note,link,place},{onConflict:'owner_id,day'}));
+  }
   else checked(await table.delete().eq('day',day));
+}
+
+export async function listCalendarPlaces() {
+  const places = [];
+  const pageSize = 500;
+  for (let start=0;;start+=pageSize) {
+    const page = checked(await client.rpc('travel_calendar_places')
+      .order('trip_id').order('day').order('name').range(start,start+pageSize-1));
+    places.push(...page);
+    if (page.length < pageSize) return places;
+  }
 }
 
 const transportTable = () => client.from('travel_transport_stickers');
