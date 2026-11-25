@@ -280,6 +280,10 @@ const K='ny-key',L=document.getElementById('lock');
 async function run(raw){
   const k=await crypto.subtle.importKey('raw',raw,'AES-GCM',false,['decrypt']);
   const t=new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b(P.iv)},k,b(P.ct)));
+  if(new URLSearchParams(location.search).get('transfer')==='1'){
+    const transfer=await import('./transfer.js');
+    await transfer.openTransfer(raw);L.hidden=true;return;
+  }
   const s=document.createElement('script');s.textContent=t;document.body.appendChild(s);L.hidden=true;
 }
 async function derive(pw){
