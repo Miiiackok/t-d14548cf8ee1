@@ -50,6 +50,8 @@
     .place-options li:last-child{border-bottom:0}
     .place-options li:hover,.place-options li[aria-selected=true]{background:#e9efda}
     .place-options small{margin-left:8px;font-size:12px;color:var(--soft)}
+    .field-optional{color:var(--soft);font-size:13px;margin-left:4px}
+    .draft-panel textarea{display:block;width:100%;min-height:76px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;color:var(--ink);font:inherit;resize:vertical}
     #trip-city[readonly]{background:#f0efe8}
     #app-message{margin-top:10px;color:var(--soft)}
     .share-dialog{width:min(calc(100% - 30px),500px);padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);color:var(--ink)}
@@ -82,7 +84,13 @@
   .week button.day:nth-child(7){border-right:0}
   .week button.overflow-day{background:#f6f5ee;color:#656c60}
   .day-num{display:grid;width:27px;height:27px;place-items:center;position:relative}
-  .important .day-num::after{content:"";position:absolute;inset:-1px 0;border:2px solid #aa4e41;border-radius:51% 47% 49% 53%;transform:rotate(-11deg);pointer-events:none}
+  .important .day-num::before,.important .day-num::after,.circle-draft .day-num::after{content:"";position:absolute;pointer-events:none}
+  .important .day-num::after,.circle-draft .day-num::after{inset:-1px -1px 0;border:1.5px solid #514d48;border-radius:49% 53% 47% 52% / 53% 46% 55% 47%;transform:rotate(-14deg)}
+  .important .day-num::before{inset:-2px 0 -1px -1px;border:1px solid #514d484f;border-radius:52% 48% 54% 50%;transform:rotate(9deg)}
+  .circle-draft .day-num::after{opacity:.72}
+  .week button.important{cursor:pointer}
+  .calendar-body{position:relative}
+  .pencil-trace{position:absolute;inset:0;z-index:3;pointer-events:none;width:100%;height:100%}
   .calendar.drawing .mark,.mark.pending{pointer-events:none}
   .calendar.drawing .week{touch-action:none}
   .calendar.drawing .day{cursor:crosshair}
@@ -116,7 +124,7 @@
       <header class="month"><button id="prev" type="button" aria-label="上个月">‹</button>
         <h2 id="month-label" aria-live="polite"></h2><button id="next" type="button" aria-label="下个月">›</button></header>
       <div class="weekdays" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
-      <div id="weeks"></div>
+      <div class="calendar-body"><div id="weeks"></div><canvas id="pencil-trace" class="pencil-trace" aria-hidden="true"></canvas></div>
     </section><div id="calendar-controls" hidden>
   <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
     <button type="button" id="discard-marker">取消</button>
@@ -135,6 +143,19 @@
         <div class="actions"><button type="submit" class="save-draft" aria-label="保存行程">✓</button><button type="button" id="cancel-trip">取消</button></div>
         <p role="status"></p>
         <p class="attribution"><a href="https://www.geonames.org/export/" target="_blank" rel="noopener">地名数据来自 GeoNames</a></p>
+      </form>
+    </section>
+    <section id="circle-panel" class="draft-panel" aria-labelledby="circle-heading" hidden>
+      <h2 id="circle-heading">重要日期</h2>
+      <p>日期 <strong id="circled-date"></strong></p>
+      <form id="circle-form">
+        <label for="circle-time">时间 <span class="field-optional">选填</span></label>
+        <input id="circle-time" name="time" type="time">
+        <label for="circle-note">备注 <span class="field-optional">选填</span></label>
+        <textarea id="circle-note" name="note" rows="3" maxlength="2000" placeholder="为这一天记下重要的事"></textarea>
+        <div class="actions"><button type="submit" class="save-draft" aria-label="保存重要日期">✓</button>
+          <button type="button" id="cancel-circle">取消</button><button type="button" id="remove-circle" hidden>移除圆圈</button></div>
+        <p role="status"></p>
       </form>
     </section><nav id="trips" class="trips" aria-label="本月旅行"></nav>
     <div class="actions account-actions">

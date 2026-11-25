@@ -37,7 +37,13 @@ export const toolCss = `
   .week button.day:nth-child(7){border-right:0}
   .week button.overflow-day{background:#f6f5ee;color:#656c60}
   .day-num{display:grid;width:27px;height:27px;place-items:center;position:relative}
-  .important .day-num::after{content:"";position:absolute;inset:-1px 0;border:2px solid #aa4e41;border-radius:51% 47% 49% 53%;transform:rotate(-11deg);pointer-events:none}
+  .important .day-num::before,.important .day-num::after,.circle-draft .day-num::after{content:"";position:absolute;pointer-events:none}
+  .important .day-num::after,.circle-draft .day-num::after{inset:-1px -1px 0;border:1.5px solid #514d48;border-radius:49% 53% 47% 52% / 53% 46% 55% 47%;transform:rotate(-14deg)}
+  .important .day-num::before{inset:-2px 0 -1px -1px;border:1px solid #514d484f;border-radius:52% 48% 54% 50%;transform:rotate(9deg)}
+  .circle-draft .day-num::after{opacity:.72}
+  .week button.important{cursor:pointer}
+  .calendar-body{position:relative}
+  .pencil-trace{position:absolute;inset:0;z-index:3;pointer-events:none;width:100%;height:100%}
   .calendar.drawing .mark,.mark.pending{pointer-events:none}
   .calendar.drawing .week{touch-action:none}
   .calendar.drawing .day{cursor:crosshair}
@@ -55,13 +61,15 @@ export const toolCss = `
   @media(max-width:520px){.week button.day{font-size:13px;padding:4px}.day-num{width:25px;height:25px}}
 `;
 
-export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard, onCircle}) {
+export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard, onCircle, onCircleDiscard}) {
   const pen = document.querySelector('#pen-tool');
   const circle = document.querySelector('#circle-tool');
   const palette = document.querySelector('#pen-palette');
   const status = document.querySelector('#drawing-status');
   const pending = document.querySelector('#pending-marker');
   const caption = document.querySelector('#pending-caption');
+  const canvas = document.querySelector('#pencil-trace');
+  const graphite = canvas.getContext('2d');
   let mode = '';
   let color = colors[0][0];
   let pointer = null;
@@ -99,6 +107,34 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     onDiscard();
     render();
   }
+  function startStroke(event) {
+    const rect=grid.getBoundingClientRect();
+    const scale=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.ceil(rect.width*scale);
+    canvas.height=Math.ceil(rect.height*scale);
+    graphite.setTransform(scale,0,0,scale,0,0);
+    graphite.lineWidth=1.55;
+    graphite.lineCap='round';
+    graphite.lineJoin='round';
+    graphite.strokeStyle='#514d48b8';
+    pointer.bounds={left:event.clientX,right:event.clientX,top:event.clientY,bottom:event.clientY};
+    pointer.point=[event.clientX-rect.left,event.clientY-rect.top];
+  }
+  function traceStroke(event) {
+    const rect=grid.getBoundingClientRect();
+    const next=[event.clientX-rect.left,event.clientY-rect.top];
+    const {bounds,point}=pointer;
+    graphite.beginPath();
+    graphite.moveTo(...point);
+    graphite.lineTo(...next);
+    graphite.stroke();
+    pointer.point=next;
+    bounds.left=Math.min(bounds.left,event.clientX);
+    bounds.right=Math.max(bounds.right,event.clientX);
+    bounds.top=Math.min(bounds.top,event.clientY);
+    bounds.bottom=Math.max(bounds.bottom,event.clientY);
+  }
+  function clearStroke() { canvas.width=0; }
   function draw(start,end) {
     const [first,last] = [start,end].sort();
     marker = {start:first,end:last,color,pending:true,name:''};
@@ -115,6 +151,12 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     const hit = document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-calendar-day]');
     return hit && grid.contains(hit) ? hit.dataset.calendarDay : '';
   }
+  function finishCircle(day) {
+    clearStroke();
+    discard();
+    setMode('');
+    onCircle(day);
+  }
   function focusDay(key) {
     requestAnimationFrame(()=>grid.querySelector(key ? '[data-calendar-day="'+key+'"]' : '[data-current-month]')?.focus({preventScroll:true}));
   }
@@ -122,7 +164,7 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
   circle.addEventListener('click',()=>{
     showPalette(false);
     if (mode === 'circle') { setMode(''); return; }
-    setMode('circle','点击日期画圈，再点一次取消。');
+    setMode('circle','用铅笔绕着日期画一圈，或直接点选日期。');
     focusDay();
   });
   for (const [ink,label] of colors) {
@@ -146,26 +188,45 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     const day = event.target.closest('[data-calendar-day]')?.dataset.calendarDay;
     if (!day || !mode || pointer || event.button !== 0) return;
     event.preventDefault();
-    if (mode === 'pen') discard();
+    if (mode === 'pen') { onCircleDiscard(); discard(); }
+    else onCircleDiscard();
     pointer = {id:event.pointerId,start:day,end:day};
     grid.setPointerCapture(event.pointerId);
     if (mode === 'pen') draw(day,day);
+    else startStroke(event);
   });
   grid.addEventListener('pointermove',event=>{
-    if (pointer?.id !== event.pointerId || mode !== 'pen') return;
+    if (pointer?.id !== event.pointerId) return;
+    if (mode === 'circle') { traceStroke(event);return;}
+    if (mode !== 'pen') return;
     const day=dayAt(event);
     if (day && day !== pointer.end) { pointer.end=day;draw(pointer.start,day); }
   });
   grid.addEventListener('pointerup',event=>{
     if (pointer?.id !== event.pointerId) return;
-    const {start,end} = pointer;
+    if (mode==='circle') traceStroke(event);
+    const {start,end,bounds} = pointer;
     pointer = null;
-    if (mode === 'circle') onCircle(start);
+    if (mode === 'circle') {
+      const center={clientX:(bounds.left+bounds.right)/2,clientY:(bounds.top+bounds.bottom)/2};
+      finishCircle(dayAt(center)||start);
+    }
     else complete(start,dayAt(event)||end);
   });
   grid.addEventListener('pointercancel',()=>{
     if (pointer && mode === 'pen') discard();
+    clearStroke();
     pointer = null;
+  });
+  grid.addEventListener('lostpointercapture',event=>{
+    if (pointer?.id !== event.pointerId) return;
+    if (mode==='pen') discard();
+    clearStroke();
+    pointer=null;
+  });
+  grid.addEventListener('click',event=>{
+    const marked = event.target.closest('[data-saved-circle]');
+    if (!mode && marked) finishCircle(marked.dataset.calendarDay);
   });
   grid.addEventListener('keydown',event=>{
     const day = event.target.closest('[data-calendar-day]')?.dataset.calendarDay;
@@ -188,8 +249,8 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     }
     if (event.key!=='Enter' && event.key!==' ') return;
     event.preventDefault();
-    if (mode==='circle') {onCircle(day);focusDay(day);return;}
-    if (!keyboardStart) {discard();keyboardStart=day;draw(day,day);focusDay(day);return;}
+    if (mode==='circle') {finishCircle(day);focusDay(day);return;}
+    if (!keyboardStart) {onCircleDiscard();discard();keyboardStart=day;draw(day,day);focusDay(day);return;}
     complete(keyboardStart,day);
   });
   return {

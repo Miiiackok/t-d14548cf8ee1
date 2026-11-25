@@ -8,7 +8,7 @@ const visibleTitle = trip => trip.country_code && trip.city
   ? flagEmoji(trip.country_code)+' - '+trip.city
   : trip.name;
 
-export function makeCalendar({readTrips,readCircles,readDrawing,onShare}) {
+export function makeCalendar({readTrips,readCircles,readCircleDraft,readDrawing,onShare}) {
   const calendar = document.querySelector('.calendar');
   const monthLabel = document.querySelector('#month-label');
   const grid = document.querySelector('#weeks');
@@ -28,13 +28,18 @@ export function makeCalendar({readTrips,readCircles,readDrawing,onShare}) {
   function makeDay(date,month,circles,tools) {
     const day = keyOf(date);
     const inMonth = date.getUTCMonth() === month;
+    const important = circles.get(day);
+    const adjusting = readCircleDraft() === day;
     const cell = document.createElement('button');
     cell.type = 'button';
-    cell.className = 'day'+(inMonth?'':' overflow-day')+(circles.has(day)?' important':'');
+    cell.className = 'day'+(inMonth?'':' overflow-day')+(important?' important':'')+(adjusting?' circle-draft':'');
     cell.dataset.calendarDay = day;
     if (inMonth) cell.dataset.currentMonth = '';
-    cell.tabIndex = tools?.enabled() ? 0 : -1;
-    cell.setAttribute('aria-label',shortDate(day)+(circles.has(day)?'，重要日期':''));
+    if (important) cell.dataset.savedCircle = '';
+    cell.tabIndex = tools?.enabled() || important ? 0 : -1;
+    const time = important?.time?.slice(0,5);
+    cell.setAttribute('aria-label',shortDate(day)+(important?'，重要日期'+(time?'，'+time:''):''));
+    if (important) cell.title = '查看重要日期';
     const number = document.createElement('span');
     number.className = 'day-num';
     number.textContent = date.getUTCDate();

@@ -27,11 +27,11 @@ export const updateTrip = async (id, fields) => checked(await tripTable()
   .update(fields).eq('id', id).select().single());
 
 export const listImportantDays = async () => checked(await client.from('travel_important_days')
-  .select('day').order('day')).map(row=>row.day);
+  .select('day,time_at,note').order('day')).map(row=>({day:row.day,time:row.time_at,note:row.note}));
 
-export async function setImportantDay(day, marked) {
+export async function setImportantDay(day, details) {
   const table=client.from('travel_important_days');
-  if (marked) checked(await table.upsert({day},{onConflict:'owner_id,day',ignoreDuplicates:true}));
+  if (details) checked(await table.upsert({day,time_at:details.time,note:details.note},{onConflict:'owner_id,day'}));
   else checked(await table.delete().eq('day',day));
 }
 

@@ -34,6 +34,10 @@ create table if not exists public.travel_important_days (
   primary key (owner_id, day)
 );
 
+alter table public.travel_important_days
+  add column if not exists time_at time,
+  add column if not exists note text not null default '' check (char_length(note)<=2000);
+
 create table if not exists public.travel_shares (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null default auth.uid(),

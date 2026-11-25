@@ -4,6 +4,7 @@ import { markerColors } from './trip-form.js';
 import { makeCalendar } from './calendar-view.js';
 import { setupDrawing } from './calendar-tools.js';
 import { makeDraft } from './drawn-draft.js';
+import { makeCircleDraft } from './circle-draft.js';
 import { setupSharePanel } from './share-panel.js';
 
 const auth = document.querySelector('#account');
@@ -17,11 +18,13 @@ auth.querySelector('[value=register]').hidden = !allowRegistration;
 let accountId = null;
 let requests = 0;
 let trips = [];
-let circles = new Set();
-const pendingCircles = new Set();
+let circles = new Map();
 let drawing;
 const openShare = setupSharePanel();
-const view = makeCalendar({readTrips:()=>trips,readCircles:()=>circles,readDrawing:()=>drawing,onShare:openShare});
+const view = makeCalendar({
+  readTrips:()=>trips,readCircles:()=>circles,readCircleDraft:()=>circleDraft.day(),
+  readDrawing:()=>drawing,onShare:openShare
+});
 const draft = makeDraft({
   async loadPlaces() {
     const response = await fetch('./places.json');
@@ -35,23 +38,19 @@ const draft = makeDraft({
   },
   discard:()=>drawing.discard()
 });
+async function saveCircle(day,details) {
+  const owner=accountId;
+  await setImportantDay(day,details);
+  if (owner !== accountId) return;
+  requests++;
+  if (details) circles.set(day,details); else circles.delete(day);
+}
+const circleDraft = makeCircleDraft({
+  read:day=>circles.get(day),save:saveCircle,remove:day=>saveCircle(day,null),render:view.render
+});
 drawing=setupDrawing({
   calendar:view.calendar,grid:view.grid,colors:markerColors,render:view.render,onDraft:draft.show,onDiscard:draft.hide,
-  async onCircle(day) {
-    if (pendingCircles.has(day)) return;
-    const wasMarked = circles.has(day);
-    pendingCircles.add(day);
-    if (wasMarked) circles.delete(day); else circles.add(day);
-    view.render();
-    view.grid.querySelector('[data-calendar-day="'+day+'"]')?.focus({preventScroll:true});
-    try {
-      await setImportantDay(day,!wasMarked);
-    } catch {
-      if (wasMarked) circles.add(day); else circles.delete(day);
-      view.render();
-      message.textContent='重要日期未保存，请联网后重试。';
-    } finally { pendingCircles.delete(day); }
-  }
+  onCircle:circleDraft.show,onCircleDiscard:circleDraft.hide
 });
 
 async function renderAccount(session) {
@@ -60,9 +59,10 @@ async function renderAccount(session) {
   if (changed) {
     requests++;
     trips = [];
-    circles = new Set();
+    circles = new Map();
     tripList.replaceChildren();
     accountId = user?.id || null;
+    circleDraft.hide();
     drawing.discard();
   }
   auth.hidden = Boolean(user);
@@ -80,11 +80,7 @@ async function loadTrips() {
   try {
     const [records,important] = await Promise.all([listTrips(),listImportantDays()]);
     if (request !== requests) return;
-    const nextCircles = new Set(important);
-    for (const day of pendingCircles) {
-      if (circles.has(day)) nextCircles.add(day); else nextCircles.delete(day);
-    }
-    circles = nextCircles;
+    circles = new Map(important.map(details=>[details.day,details]));
     trips = records.map(record => ({
       id: record.id,
       name: record.name,
