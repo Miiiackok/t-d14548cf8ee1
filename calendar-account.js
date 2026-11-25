@@ -9,6 +9,7 @@ import { setupSharePanel } from './share-panel.js';
 const auth = document.querySelector('#account');
 const message = document.querySelector('#app-message');
 const calendar = document.querySelector('.calendar');
+const toolbar = document.querySelector('#drawing-tools');
 const controls = document.querySelector('#calendar-controls');
 const importer = document.querySelector('#legacy-import');
 const tripList = document.querySelector('#trips');
@@ -66,6 +67,7 @@ async function renderAccount(session) {
   }
   auth.hidden = Boolean(user);
   calendar.hidden = !user;
+  toolbar.hidden = !user;
   controls.hidden = !user;
   tripList.hidden = !user;
   importer.closest('label').hidden = !user || user.id !== migrationOwner;

@@ -66,10 +66,11 @@
     .trips:empty{display:none}
   
   .drawing-tools{margin-top:14px}
+  .drawing-tools:not([hidden])+.calendar{margin-top:12px}
   .tool-row,.pen-palette{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
   .tool-row button,.pending-marker button,.share-button{min-height:44px;padding:0 14px;background:var(--sheet);border:1px solid var(--line);border-radius:9px;color:var(--ink);cursor:pointer;font:inherit}
   .tool-row .active{border-color:#667b42;background:#eaf0d8}
-  .tool-circle{display:inline-block;width:15px;height:15px;border:2px solid #aa4e41;border-radius:50%;margin-right:4px;vertical-align:-2px;transform:rotate(-12deg)}
+  .tool-marker{display:inline-block;width:18px;height:8px;border-radius:2px;background:var(--marker);vertical-align:1px;transform:rotate(-12deg)}
   .pen-palette{margin-top:10px;padding:6px 9px;border:1px solid var(--line);background:var(--sheet);border-radius:10px;width:fit-content}
   .pen-palette button{width:44px;height:44px;border:1px solid transparent;border-radius:7px;background:transparent;cursor:pointer;display:grid;place-items:center}
   .pen-palette button span{width:28px;height:14px;background:var(--chip);display:block;border-radius:3px;border:1px solid #26352d44;transform:rotate(-6deg)}
@@ -103,21 +104,22 @@
       <label for="password">密码</label><input id="password" type="password" name="password" autocomplete="current-password" minlength="8" required>
       <div class="actions"><button type="submit" value="login">登录</button><button type="submit" value="register">注册</button></div>
     </form>
+  <div class="drawing-tools" id="drawing-tools" hidden>
+    <div class="tool-row">
+      <button type="button" id="pen-tool" aria-expanded="false" aria-controls="pen-palette"><span class="tool-marker" aria-hidden="true"></span> 马克笔</button>
+      <button type="button" id="circle-tool" aria-label="铅笔（重要日期）" aria-pressed="false" title="圈出重要日期">✎ 铅笔</button>
+    </div>
+    <div id="pen-palette" class="pen-palette" aria-label="选择马克笔颜色" hidden></div>
+    <p id="drawing-status" class="drawing-status" role="status" hidden></p>
+  </div>
     <section class="calendar" aria-label="旅行月历" hidden>
       <header class="month"><button id="prev" type="button" aria-label="上个月">‹</button>
         <h2 id="month-label" aria-live="polite"></h2><button id="next" type="button" aria-label="下个月">›</button></header>
       <div class="weekdays" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
       <div id="weeks"></div>
     </section><div id="calendar-controls" hidden>
-  <div class="drawing-tools" id="drawing-tools">
-    <div class="tool-row">
-      <button type="button" id="pen-tool" aria-expanded="false" aria-controls="pen-palette">✎ 马克笔</button>
-      <button type="button" id="circle-tool" aria-pressed="false"><span class="tool-circle" aria-hidden="true"></span> 重要日期</button>
-    </div>
-    <div id="pen-palette" class="pen-palette" aria-label="选择马克笔颜色" hidden></div>
-    <p id="drawing-status" class="drawing-status" role="status" hidden></p>
-    <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
-      <button type="button" id="discard-marker">取消</button></div>
+  <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
+    <button type="button" id="discard-marker">取消</button>
   </div>
     <section id="draft-panel" class="draft-panel" aria-labelledby="draft-heading" hidden>
       <h2 id="draft-heading">新行程</h2>

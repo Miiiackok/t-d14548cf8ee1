@@ -7,21 +7,25 @@ export function flagEmoji(country) {
 export const toolMarkup = `
   <div class="drawing-tools" id="drawing-tools">
     <div class="tool-row">
-      <button type="button" id="pen-tool" aria-expanded="false" aria-controls="pen-palette">✎ 马克笔</button>
-      <button type="button" id="circle-tool" aria-pressed="false"><span class="tool-circle" aria-hidden="true"></span> 重要日期</button>
+      <button type="button" id="pen-tool" aria-expanded="false" aria-controls="pen-palette"><span class="tool-marker" aria-hidden="true"></span> 马克笔</button>
+      <button type="button" id="circle-tool" aria-label="铅笔（重要日期）" aria-pressed="false" title="圈出重要日期">✎ 铅笔</button>
     </div>
     <div id="pen-palette" class="pen-palette" aria-label="选择马克笔颜色" hidden></div>
     <p id="drawing-status" class="drawing-status" role="status" hidden></p>
-    <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
-      <button type="button" id="discard-marker">取消</button></div>
+  </div>`;
+
+export const pendingMarkup = `
+  <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
+    <button type="button" id="discard-marker">取消</button>
   </div>`;
 
 export const toolCss = `
   .drawing-tools{margin-top:14px}
+  .drawing-tools:not([hidden])+.calendar{margin-top:12px}
   .tool-row,.pen-palette{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
   .tool-row button,.pending-marker button,.share-button{min-height:44px;padding:0 14px;background:var(--sheet);border:1px solid var(--line);border-radius:9px;color:var(--ink);cursor:pointer;font:inherit}
   .tool-row .active{border-color:#667b42;background:#eaf0d8}
-  .tool-circle{display:inline-block;width:15px;height:15px;border:2px solid #aa4e41;border-radius:50%;margin-right:4px;vertical-align:-2px;transform:rotate(-12deg)}
+  .tool-marker{display:inline-block;width:18px;height:8px;border-radius:2px;background:var(--marker);vertical-align:1px;transform:rotate(-12deg)}
   .pen-palette{margin-top:10px;padding:6px 9px;border:1px solid var(--line);background:var(--sheet);border-radius:10px;width:fit-content}
   .pen-palette button{width:44px;height:44px;border:1px solid transparent;border-radius:7px;background:transparent;cursor:pointer;display:grid;place-items:center}
   .pen-palette button span{width:28px;height:14px;background:var(--chip);display:block;border-radius:3px;border:1px solid #26352d44;transform:rotate(-6deg)}
@@ -62,7 +66,6 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
   let color = colors[0][0];
   let pointer = null;
   let keyboardStart = '';
-  let timer;
   let marker = null;
 
   function showStatus(text) {
@@ -89,7 +92,6 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     pending.style.setProperty('--trip-color',marker?.color||color);
   }
   function discard() {
-    clearTimeout(timer);
     marker = null;
     pointer = null;
     keyboardStart = '';
@@ -103,17 +105,11 @@ export function setupDrawing({calendar, grid, colors, render, onDraft, onDiscard
     render();
   }
   function complete(start,end) {
-    clearTimeout(timer);
     const [first,last] = [start,end].sort();
     marker = {start:first,end:last,color,pending:true,name:''};
     setMode('');
-    const drawn = marker;
-    showPending('已画出日期');
-    timer = setTimeout(() => {
-      if (marker !== drawn) return;
-      showPending('填写地点完成记录');
-      onDraft(drawn);
-    },2000);
+    showPending('已选日期');
+    onDraft(marker);
   }
   function dayAt(event) {
     const hit = document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-calendar-day]');
