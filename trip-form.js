@@ -165,37 +165,20 @@ export function installTripForm(form,loadIndex) {
     cityInput.setCustomValidity('');
     if (cityInput.value !== selectedCity) selectedCity = '';
   });
-  startField.addEventListener('change',()=>{
-    endField.min = startField.value;
-    if (!endField.value || endField.value < startField.value) endField.value = startField.value;
-  });
-  const colorGroup = form.querySelector('#marker-choices');
-  for (const [color,label] of markerColors) {
-    const choice = document.createElement('label');
-    choice.className = 'color-choice';
-    choice.style.setProperty('--chip-color',color);
-    const input = document.createElement('input');
-    input.type = 'radio';
-    input.name = 'marker';
-    input.value = color;
-    input.setAttribute('aria-label',label);
-    input.defaultChecked = color === markerColors[0][0];
-    const swatch = document.createElement('span');
-    swatch.setAttribute('aria-hidden','true');
-    choice.append(input,swatch);
-    choice.title = label;
-    colorGroup.append(choice);
-  }
   return {
     reset() {
       form.reset();
       countryCode = selectedCity = autoName = '';
       cityInput.readOnly = true;
-      endField.min = '';
       countryInput.setCustomValidity('');
       cityInput.setCustomValidity('');
       closeCountry();
       closeCity();
+    },
+    setMarker(marker) {
+      startField.value = marker.start;
+      endField.value = marker.end;
+      form.elements.marker.value = marker.color;
     },
     values() {
       if (!countryCode) {

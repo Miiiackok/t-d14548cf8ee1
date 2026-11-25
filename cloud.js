@@ -26,6 +26,32 @@ export const createTrip = async trip => checked(await tripTable()
 export const updateTrip = async (id, fields) => checked(await tripTable()
   .update(fields).eq('id', id).select().single());
 
+export const listImportantDays = async () => checked(await client.from('travel_important_days')
+  .select('day').order('day')).map(row=>row.day);
+
+export async function setImportantDay(day, marked) {
+  const table=client.from('travel_important_days');
+  if (marked) checked(await table.upsert({day},{onConflict:'owner_id,day',ignoreDuplicates:true}));
+  else checked(await table.delete().eq('day',day));
+}
+
+export const listTravelShares = async trip => checked(await client.from('travel_shares')
+  .select('id,viewer_email,created_at').eq('trip_id',trip).order('created_at',{ascending:false}));
+
+export async function makeTravelShare(trip,viewer) {
+  const hex = data => [...new Uint8Array(data)].map(value=>value.toString(16).padStart(2,'0')).join('');
+  const token=hex(crypto.getRandomValues(new Uint8Array(32)));
+  const hash=hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token)));
+  checked(await client.from('travel_shares').insert({trip_id:trip,viewer_email:viewer,token_hash:'\\x'+hash}));
+  return new URL('./share.html#'+token,location.href).href;
+}
+
+export async function revokeTravelShare(id) {
+  checked(await client.from('travel_shares').delete().eq('id',id));
+}
+
+export const readTravelShare = async token => checked(await client.rpc('travel_open_share',{share_token:token}));
+
 export async function openTripStore(trip, user, onStatus = () => {}) {
   const docs = new Map();
   const urls = new Map();

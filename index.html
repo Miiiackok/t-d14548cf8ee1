@@ -37,94 +37,121 @@
     .swatch{width:17px;height:8px;border-radius:2px;background:var(--trip-color)}
     @media(max-width:520px){main{width:calc(100% - 24px);margin-top:27px}.calendar{margin-top:21px}.month{padding:10px}.day{padding:6px;font-size:13px}.week{min-height:var(--mobile-row-height,64px)}}
   
-  [hidden]{display:none!important}
-  .auth,dialog{width:min(100%,460px);background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:20px;color:var(--ink)}
-  .auth{margin-top:22px}
-  .auth label,dialog label{display:block;margin:12px 0 3px}
-  .auth input,dialog input{width:100%;font:inherit;min-height:44px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);padding:7px 10px}
-  button:disabled{opacity:.5}
-  .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:14px 0}
-  .actions button,.actions label{min-height:44px;display:inline-flex;align-items:center;padding:0 12px;background:var(--sheet);border:1px solid var(--line);border-radius:7px;cursor:pointer;font:inherit}
-  .actions button:first-child{background:var(--marker)}
-  .actions label input{max-width:150px;margin-left:7px}
-  dialog::backdrop{background:#28312877}
-  #app-message{margin-top:12px;color:var(--soft)}
-  #calendar-controls{justify-content:space-between;margin-top:12px}
-  #add-trip{font-weight:700;border-color:#a4ba72}
-  .trip-dates{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  #trip-dialog{max-height:calc(100dvh - 38px);overflow:auto}
-  #trip-dialog label span,.attribution{font-size:13px;color:var(--soft)}
-  .place-options{list-style:none;margin:3px 0 8px;padding:0;max-height:168px;overflow:auto;border:1px solid var(--line);border-radius:8px}
-  .place-options li{cursor:pointer;padding:8px 10px;border-bottom:1px solid var(--line)}
-  .place-options li:last-child{border-bottom:0}
-  .place-options li:hover,.place-options li[aria-selected=true]{background:#e9efda}
-  .place-options small{margin-left:8px;font-size:12px;color:var(--soft)}
-  #trip-city[readonly]{background:#f0efe8}
-  .markers{min-width:0;border:0;padding:0;margin:15px 0 0}
-  .markers legend{padding:0}
-  #marker-choices{display:flex;flex-wrap:wrap;gap:4px}
-  #trip-dialog label.color-choice{position:relative;margin:2px 0 0;cursor:pointer;width:45px;height:45px;display:grid;place-items:center}
-  #trip-dialog .color-choice input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
-  #trip-dialog .color-choice span{width:30px;height:15px;background:var(--chip-color);border:1px solid #34402b55;border-radius:3px}
-  #trip-dialog .color-choice input:checked+span{outline:2px solid #34402b;outline-offset:3px}
-  #trip-dialog .color-choice input:focus-visible+span{outline:3px solid #365e91;outline-offset:3px}
-  .trip-meta{display:block;font-size:13px}
-  @media(max-width:375px){.trip-dates{grid-template-columns:1fr}}
-</style>
-<meta name="theme-color" content="#f8f6ee"><link rel="manifest" href="manifest.webmanifest"></head>
-<body>
-  <main>
-    <h1>我的旅行日历</h1>
-    <p class="intro">点日历上的彩色横线，打开这段旅行。</p>
-    
-  <form class="auth" id="account">
-    <h2>登录旅行日历</h2>
-    <label for="email">邮箱</label><input id="email" type="email" name="email" autocomplete="username" required>
-    <label for="password">密码</label><input id="password" type="password" name="password" autocomplete="current-password" minlength="8" required>
-    <div class="actions"><button type="submit" value="login">登录</button><button type="submit" value="register">注册</button></div>
-  </form>
-    <section class="calendar" hidden aria-label="旅行月历">
-      <header class="month">
-        <button id="prev" type="button" aria-label="上个月">‹</button>
-        <h2 id="month-label" aria-live="polite"></h2>
-        <button id="next" type="button" aria-label="下个月">›</button>
-      </header>
+    [hidden]{display:none!important}
+    .auth{margin-top:20px;width:min(100%,470px);padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--sheet)}
+    .auth label{display:block;margin:12px 0 3px}
+    .auth input{width:100%;min-height:44px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;font:inherit}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .actions button,.actions label{min-height:44px;padding:0 12px;border:1px solid var(--line);background:var(--sheet);border-radius:7px;font:inherit;cursor:pointer}
+    .actions button:first-child{background:var(--marker)}
+    .account-actions{justify-content:flex-end}
+    .place-options{list-style:none;margin:3px 0 8px;padding:0;max-height:168px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+    .place-options li{cursor:pointer;padding:8px 10px;border-bottom:1px solid var(--line)}
+    .place-options li:last-child{border-bottom:0}
+    .place-options li:hover,.place-options li[aria-selected=true]{background:#e9efda}
+    .place-options small{margin-left:8px;font-size:12px;color:var(--soft)}
+    #trip-city[readonly]{background:#f0efe8}
+    #app-message{margin-top:10px;color:var(--soft)}
+    .share-dialog{width:min(calc(100% - 30px),500px);padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--sheet);color:var(--ink)}
+    .share-dialog::backdrop{background:#26352d88}
+    .share-head{display:flex;justify-content:space-between;align-items:center}
+    .share-head button,#active-shares button{min-height:44px;padding:0 10px;background:transparent;border:1px solid var(--line);border-radius:7px;font:inherit}
+    .share-scope{margin:8px 0 14px;color:var(--soft);font-size:14px}
+    .share-dialog fieldset{display:grid;gap:6px;border:1px solid var(--line);border-radius:7px;margin:0 0 10px;padding:8px}
+    .share-dialog label:not(.share-recipient){min-height:36px}
+    .share-dialog input:not([type=radio]){width:100%;min-height:42px;border:1px solid var(--line);border-radius:7px;padding:5px 9px;font:inherit}
+    #active-shares{list-style:none;padding:0}
+    #active-shares li{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;overflow-wrap:anywhere}
+    .attribution{font-size:12px;color:var(--soft)}
+    .trips:empty{display:none}
+  
+  .drawing-tools{margin-top:14px}
+  .tool-row,.pen-palette{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .tool-row button,.pending-marker button,.share-button{min-height:44px;padding:0 14px;background:var(--sheet);border:1px solid var(--line);border-radius:9px;color:var(--ink);cursor:pointer;font:inherit}
+  .tool-row .active{border-color:#667b42;background:#eaf0d8}
+  .tool-circle{display:inline-block;width:15px;height:15px;border:2px solid #aa4e41;border-radius:50%;margin-right:4px;vertical-align:-2px;transform:rotate(-12deg)}
+  .pen-palette{margin-top:10px;padding:6px 9px;border:1px solid var(--line);background:var(--sheet);border-radius:10px;width:fit-content}
+  .pen-palette button{width:44px;height:44px;border:1px solid transparent;border-radius:7px;background:transparent;cursor:pointer;display:grid;place-items:center}
+  .pen-palette button span{width:28px;height:14px;background:var(--chip);display:block;border-radius:3px;border:1px solid #26352d44;transform:rotate(-6deg)}
+  .pen-palette button:hover{border-color:#62764c}
+  .drawing-status{margin:6px 0;color:var(--soft);font-size:14px}
+  .pending-marker{display:flex;align-items:center;gap:10px;min-height:50px;margin-top:12px;padding:2px 10px 2px 13px;border:1px dashed #adb89a;border-radius:10px}
+  .pending-marker button{margin-left:auto;min-height:40px}
+  .week button.day{width:100%;display:flex;align-items:flex-start;justify-content:flex-start;border:0;border-right:1px solid var(--line);text-align:left;background:transparent;color:inherit;font:inherit;cursor:default;user-select:none}
+  .week button.day:nth-child(7){border-right:0}
+  .week button.overflow-day{background:#f6f5ee;color:#656c60}
+  .day-num{display:grid;width:27px;height:27px;place-items:center;position:relative}
+  .important .day-num::after{content:"";position:absolute;inset:-1px 0;border:2px solid #aa4e41;border-radius:51% 47% 49% 53%;transform:rotate(-11deg);pointer-events:none}
+  .calendar.drawing .mark,.mark.pending{pointer-events:none}
+  .calendar.drawing .week{touch-action:none}
+  .calendar.drawing .day{cursor:crosshair}
+  .calendar.drawing .day:hover .day-num{background:#dfe8cc;border-radius:50%}
+  .mark.pending::before{opacity:.82}
+  .trip-row{display:flex;gap:8px;align-items:stretch}
+  .trip-row .trip{flex:1;min-width:0}
+  .trip-row .share-button{flex:0 0 auto}
+  .draft-panel{margin-top:12px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--sheet);max-width:560px}
+  .draft-panel h2{font-size:19px}
+  .draft-panel form label{display:block;margin:12px 0 3px}
+  .draft-panel input:not([type=hidden]){width:100%;font:inherit;min-height:44px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);padding:7px 10px}
+  .draft-panel .save-draft{min-width:55px;font-size:23px}
+  #drawn-dates{font-weight:650;font-variant-numeric:tabular-nums}
+  @media(max-width:520px){.week button.day{font-size:13px;padding:4px}.day-num{width:25px;height:25px}}
+</style><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#f8f6ee"></head><body><main><h1>我的旅行日历</h1>
+    <form class="auth" id="account"><h2>登录旅行日历</h2>
+      <label for="email">邮箱</label><input id="email" type="email" name="email" autocomplete="username" required>
+      <label for="password">密码</label><input id="password" type="password" name="password" autocomplete="current-password" minlength="8" required>
+      <div class="actions"><button type="submit" value="login">登录</button><button type="submit" value="register">注册</button></div>
+    </form>
+    <section class="calendar" aria-label="旅行月历" hidden>
+      <header class="month"><button id="prev" type="button" aria-label="上个月">‹</button>
+        <h2 id="month-label" aria-live="polite"></h2><button id="next" type="button" aria-label="下个月">›</button></header>
       <div class="weekdays" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
       <div id="weeks"></div>
-    </section>
-    
-  <div id="calendar-controls" class="actions" hidden>
-    <button id="add-trip" type="button">＋ 添加行程</button>
-    <label id="legacy-import-label" hidden>迁入旧行程<input id="legacy-import" type="file" accept=".json,application/json"></label>
-    <button id="signout" type="button">退出</button>
+    </section><div id="calendar-controls" hidden>
+  <div class="drawing-tools" id="drawing-tools">
+    <div class="tool-row">
+      <button type="button" id="pen-tool" aria-expanded="false" aria-controls="pen-palette">✎ 马克笔</button>
+      <button type="button" id="circle-tool" aria-pressed="false"><span class="tool-circle" aria-hidden="true"></span> 重要日期</button>
+    </div>
+    <div id="pen-palette" class="pen-palette" aria-label="选择马克笔颜色" hidden></div>
+    <p id="drawing-status" class="drawing-status" role="status" hidden></p>
+    <div id="pending-marker" class="pending-marker" hidden><span class="swatch" aria-hidden="true"></span><span id="pending-caption"></span>
+      <button type="button" id="discard-marker">取消</button></div>
   </div>
-  <p id="app-message" role="status"></p>
-  <dialog id="trip-dialog" aria-labelledby="trip-dialog-title">
-    <form id="new-trip">
-      <h2 id="trip-dialog-title">添加行程</h2>
-      <div class="place-field">
+    <section id="draft-panel" class="draft-panel" aria-labelledby="draft-heading" hidden>
+      <h2 id="draft-heading">新行程</h2>
+      <p id="drawn-dates"></p>
+      <form id="new-trip">
+        <input type="hidden" name="name"><input type="hidden" name="start_date"><input type="hidden" name="end_date"><input type="hidden" name="marker">
         <label for="trip-country">国家或地区</label>
         <input id="trip-country" role="combobox" aria-autocomplete="list" aria-controls="country-options" aria-expanded="false" autocomplete="off" placeholder="输入中文或英文搜索" required>
         <ul id="country-options" class="place-options" role="listbox" aria-label="国家或地区建议" hidden></ul>
-      </div>
-      <div class="place-field">
         <label for="trip-city">城市</label>
-        <input id="trip-city" role="combobox" aria-autocomplete="list" aria-controls="city-options" aria-expanded="false" autocomplete="off" placeholder="选国家后搜索，也可手动输入" maxlength="120" required readonly>
+        <input id="trip-city" role="combobox" aria-autocomplete="list" aria-controls="city-options" aria-expanded="false" autocomplete="off" placeholder="选城市，也可手动输入" maxlength="120" required readonly>
         <ul id="city-options" class="place-options" role="listbox" aria-label="城市建议" hidden></ul>
-      </div>
-      <label for="trip-name">行程名称 <span>可选</span></label><input id="trip-name" name="name" placeholder="默认使用城市名" maxlength="100">
-      <div class="trip-dates">
-        <div><label for="trip-start">开始日期</label><input id="trip-start" name="start_date" type="date" required></div>
-        <div><label for="trip-end">结束日期</label><input id="trip-end" name="end_date" type="date" required></div>
-      </div>
-      <fieldset class="markers"><legend>马克笔颜色</legend><div id="marker-choices"></div></fieldset>
-      <div class="actions"><button type="submit">保存行程</button><button type="button" id="cancel-trip">取消</button></div>
-      <p class="attribution"><a href="https://www.geonames.org/export/" target="_blank" rel="noopener">地名数据来自 GeoNames</a></p>
+        <div class="actions"><button type="submit" class="save-draft" aria-label="保存行程">✓</button><button type="button" id="cancel-trip">取消</button></div>
+        <p role="status"></p>
+        <p class="attribution"><a href="https://www.geonames.org/export/" target="_blank" rel="noopener">地名数据来自 GeoNames</a></p>
+      </form>
+    </section><nav id="trips" class="trips" aria-label="本月旅行"></nav>
+    <div class="actions account-actions">
+      <label id="legacy-import-label" hidden>迁入旧行程<input id="legacy-import" type="file" accept=".json,application/json"></label>
+      <button id="signout" type="button">退出</button>
+    </div></div><p id="app-message" role="status"></p>
+    <dialog id="share-dialog" aria-labelledby="share-heading" class="share-dialog">
+      <div class="share-head"><h2 id="share-heading">分享行程</h2><button type="button" id="close-share">关闭</button></div>
+      <p id="share-for"></p>
+      <p class="share-scope">分享页显示日期和每日安排。票据、附件和备注保存在自己的账号里。</p>
+      <form>
+        <fieldset><legend>谁可以查看</legend>
+          <label><input type="radio" name="access" value="account" checked>指定邮箱登录后查看</label>
+          <label><input type="radio" name="access" value="link">拿到链接的人可以查看</label>
+        </fieldset>
+        <label class="share-recipient">获邀邮箱<input type="email" name="viewer" autocomplete="off" required></label>
+        <div class="actions"><button type="submit">生成只读链接</button></div>
+      </form>
+      <div id="share-output" class="actions" hidden><input id="share-url" type="url" readonly aria-label="分享链接"><button type="button" id="copy-share">复制链接</button></div>
       <p role="status"></p>
-    </form>
-  </dialog>
-    <nav id="trips" hidden class="trips" aria-label="本月旅行"></nav>
-  </main>
-  <script type="module" src="./calendar.js"></script>
-</body>
-</html>
+      <h3>已生成的链接</h3><ul id="active-shares"></ul>
+    </dialog></main><script type="module" src="./calendar-account.js"></script></body></html>

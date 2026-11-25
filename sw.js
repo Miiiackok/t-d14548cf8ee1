@@ -1,7 +1,8 @@
 const publicCache = 'travel-account-shell-v1';
 const root = new URL('./', self.registration.scope);
 const publicPaths = new Set([
-  '', 'index.html', 'trip.html', 'calendar.js', 'trip-account.js',
+  '', 'index.html', 'trip.html', 'calendar-account.js', 'trip-account.js',
+  'calendar-tools.js','calendar-view.js','drawn-draft.js','share.html','share-panel.js','shared-view.js',
   'itinerary.js', 'cloud.js', 'config.js', 'migration.js', 'trip-form.js', 'places.json', 'manifest.webmanifest'
 ]);
 
