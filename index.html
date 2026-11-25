@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>我的旅行日历</title>
+  <style>
+    :root{--paper:#f8f6ee;--ink:#26352d;--soft:#59655b;--line:#dddcd0;--sheet:#fdfcf7;--marker:#c6ef5c}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,sans-serif}
+    main{width:min(100% - 36px,850px);margin:45px auto 36px}
+    h1,h2,p{margin:0}
+    h1{font:700 clamp(31px,6vw,48px)/1.15 "Songti SC","Noto Serif CJK SC",serif;letter-spacing:.035em}
+    .intro{margin-top:11px;color:var(--soft)}
+    .calendar{margin-top:27px;background:var(--sheet);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .month{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px}
+    .month h2{font-size:21px;font-variant-numeric:tabular-nums}
+    button,a{color:inherit}
+    .month button{background:transparent;border:1px solid var(--line);border-radius:50%;width:44px;height:44px;font-size:24px;cursor:pointer}
+    .month button:hover{background:#efeee5}
+    .weekdays,.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+    .weekdays span{text-align:center;color:var(--soft);font-size:13px;padding:7px 0}
+    .week{position:relative;border-top:1px solid var(--line);min-height:var(--row-height,82px)}
+    .day{min-width:0;padding:7px 10px;border-right:1px solid var(--line);font-variant-numeric:tabular-nums}
+    .day:nth-child(7){border-right:0}
+    .overflow-day{color:#656c60;background:#f6f5ee}
+    .mark{position:absolute;left:calc(100% / 7 * var(--start) + 3px);width:calc(100% / 7 * var(--length) - 6px);top:calc(27px + var(--lane) * 33px);height:34px;display:flex;align-items:center;padding:0 7px;isolation:isolate;text-decoration:none;white-space:nowrap;color:#202b18;font-size:13px;font-weight:700}
+    .mark::before{content:"";position:absolute;z-index:-1;inset:9px 0 6px;background:var(--trip-color);clip-path:polygon(1% 9%,99% 0,100% 38%,99% 95%,2% 100%,0 60%)}
+    .mark:hover::before{inset:6px 0 4px;filter:saturate(1.25)}
+    .mark:focus-visible,.month button:focus-visible,.trip:focus-visible{outline:2px solid #426036;outline-offset:2px}
+    .trips{display:grid;gap:8px;margin-top:21px}
+    .trip{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--sheet);text-decoration:none}
+    .trip:hover{border-color:#8e9982}
+    .trip strong{flex:1}
+    .trip span{color:var(--soft);font-variant-numeric:tabular-nums}
+    .swatch{width:17px;height:8px;border-radius:2px;background:var(--trip-color)}
+    @media(max-width:520px){main{width:calc(100% - 24px);margin-top:27px}.calendar{margin-top:21px}.month{padding:10px}.day{padding:6px;font-size:13px}.week{min-height:var(--mobile-row-height,64px)}}
+  
+  [hidden]{display:none!important}
+  .auth,dialog{width:min(100%,460px);background:var(--sheet);border:1px solid var(--line);border-radius:14px;padding:20px;color:var(--ink)}
+  .auth{margin-top:22px}
+  .auth label,dialog label{display:block;margin:12px 0 3px}
+  .auth input,dialog input{width:100%;font:inherit;min-height:44px;border:1px solid var(--line);border-radius:6px;background:var(--sheet);color:var(--ink);padding:7px 10px}
+  button:disabled{opacity:.5}
+  .actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:14px 0}
+  .actions button,.actions label{min-height:44px;display:inline-flex;align-items:center;padding:0 12px;background:var(--sheet);border:1px solid var(--line);border-radius:7px;cursor:pointer;font:inherit}
+  .actions button:first-child{background:var(--marker)}
+  .actions label input{max-width:150px;margin-left:7px}
+  dialog::backdrop{background:#28312877}
+  #app-message{margin-top:12px;color:var(--soft)}
+  #calendar-controls{justify-content:space-between;margin-top:12px}
+  #add-trip{font-weight:700;border-color:#a4ba72}
+  .trip-dates{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  #trip-dialog{max-height:calc(100dvh - 38px);overflow:auto}
+  #trip-dialog label span,.attribution{font-size:13px;color:var(--soft)}
+  .place-options{list-style:none;margin:3px 0 8px;padding:0;max-height:168px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .place-options li{cursor:pointer;padding:8px 10px;border-bottom:1px solid var(--line)}
+  .place-options li:last-child{border-bottom:0}
+  .place-options li:hover,.place-options li[aria-selected=true]{background:#e9efda}
+  .place-options small{margin-left:8px;font-size:12px;color:var(--soft)}
+  #trip-city[readonly]{background:#f0efe8}
+  .markers{min-width:0;border:0;padding:0;margin:15px 0 0}
+  .markers legend{padding:0}
+  #marker-choices{display:flex;flex-wrap:wrap;gap:4px}
+  #trip-dialog label.color-choice{position:relative;margin:2px 0 0;cursor:pointer;width:45px;height:45px;display:grid;place-items:center}
+  #trip-dialog .color-choice input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+  #trip-dialog .color-choice span{width:30px;height:15px;background:var(--chip-color);border:1px solid #34402b55;border-radius:3px}
+  #trip-dialog .color-choice input:checked+span{outline:2px solid #34402b;outline-offset:3px}
+  #trip-dialog .color-choice input:focus-visible+span{outline:3px solid #365e91;outline-offset:3px}
+  .trip-meta{display:block;font-size:13px}
+  @media(max-width:375px){.trip-dates{grid-template-columns:1fr}}
+</style>
+<meta name="theme-color" content="#f8f6ee"><link rel="manifest" href="manifest.webmanifest"></head>
+<body>
+  <main>
+    <h1>我的旅行日历</h1>
+    <p class="intro">点日历上的彩色横线，打开这段旅行。</p>
+    
+  <form class="auth" id="account">
+    <h2>登录旅行日历</h2>
+    <label for="email">邮箱</label><input id="email" type="email" name="email" autocomplete="username" required>
+    <label for="password">密码</label><input id="password" type="password" name="password" autocomplete="current-password" minlength="8" required>
+    <div class="actions"><button type="submit" value="login">登录</button><button type="submit" value="register">注册</button></div>
+  </form>
+    <section class="calendar" hidden aria-label="旅行月历">
+      <header class="month">
+        <button id="prev" type="button" aria-label="上个月">‹</button>
+        <h2 id="month-label" aria-live="polite"></h2>
+        <button id="next" type="button" aria-label="下个月">›</button>
+      </header>
+      <div class="weekdays" aria-hidden="true"><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span></div>
+      <div id="weeks"></div>
+    </section>
+    
+  <div id="calendar-controls" class="actions" hidden>
+    <button id="add-trip" type="button">＋ 添加行程</button>
+    <label id="legacy-import-label" hidden>迁入旧行程<input id="legacy-import" type="file" accept=".json,application/json"></label>
+    <button id="signout" type="button">退出</button>
+  </div>
+  <p id="app-message" role="status"></p>
+  <dialog id="trip-dialog" aria-labelledby="trip-dialog-title">
+    <form id="new-trip">
+      <h2 id="trip-dialog-title">添加行程</h2>
+      <div class="place-field">
+        <label for="trip-country">国家或地区</label>
+        <input id="trip-country" role="combobox" aria-autocomplete="list" aria-controls="country-options" aria-expanded="false" autocomplete="off" placeholder="输入中文或英文搜索" required>
+        <ul id="country-options" class="place-options" role="listbox" aria-label="国家或地区建议" hidden></ul>
+      </div>
+      <div class="place-field">
+        <label for="trip-city">城市</label>
+        <input id="trip-city" role="combobox" aria-autocomplete="list" aria-controls="city-options" aria-expanded="false" autocomplete="off" placeholder="选国家后搜索，也可手动输入" maxlength="120" required readonly>
+        <ul id="city-options" class="place-options" role="listbox" aria-label="城市建议" hidden></ul>
+      </div>
+      <label for="trip-name">行程名称 <span>可选</span></label><input id="trip-name" name="name" placeholder="默认使用城市名" maxlength="100">
+      <div class="trip-dates">
+        <div><label for="trip-start">开始日期</label><input id="trip-start" name="start_date" type="date" required></div>
+        <div><label for="trip-end">结束日期</label><input id="trip-end" name="end_date" type="date" required></div>
+      </div>
+      <fieldset class="markers"><legend>马克笔颜色</legend><div id="marker-choices"></div></fieldset>
+      <div class="actions"><button type="submit">保存行程</button><button type="button" id="cancel-trip">取消</button></div>
+      <p class="attribution"><a href="https://www.geonames.org/export/" target="_blank" rel="noopener">地名数据来自 GeoNames</a></p>
+      <p role="status"></p>
+    </form>
+  </dialog>
+    <nav id="trips" hidden class="trips" aria-label="本月旅行"></nav>
+  </main>
+  <script type="module" src="./calendar.js"></script>
+</body>
+</html>
