@@ -22,6 +22,7 @@ const tripList = document.querySelector('#trips');
 auth.querySelector('[value=register]').hidden = !allowRegistration;
 let accountId = null;
 let requests = 0;
+let importInProgress = false;
 let trips = [];
 let circles = new Map();
 let transportDays = new Map();
@@ -96,7 +97,7 @@ async function renderAccount(session) {
 }
 
 async function loadTrips() {
-  if (!accountId) return;
+  if (!accountId || importInProgress) return;
   const request = ++requests;
   try {
     const [records,important,stickers,places] = await Promise.all([
@@ -198,17 +199,23 @@ document.querySelector('#signout').onclick = async () => {
 };
 importer.addEventListener('change', async () => {
   const file = importer.files[0];
-  if (!client || !file) return;
+  if (!client || !file || importInProgress) return;
+  importInProgress = true;
+  requests++;
+  importer.disabled = true;
   try {
     const response = await client.auth.getUser();
     if (response.error || response.data.user?.id !== migrationOwner) throw new Error('Wrong account');
     const { importLegacy } = await import('./migration.js');
     message.textContent = '正在迁入旧行程与附件…';
     await importLegacy(await file.text(), response.data.user);
+    importInProgress = false;
     await loadTrips();
   } catch {
     message.textContent = '迁入未完成。请确认使用原账号和正确的迁移文件。可用同一份文件重试。';
   } finally {
+    importInProgress = false;
+    importer.disabled = false;
     importer.value = '';
   }
 });

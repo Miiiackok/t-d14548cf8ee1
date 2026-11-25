@@ -34,12 +34,32 @@ async function readLegacyDevice() {
   });
 }
 
+async function mergeBackup(legacy, encoded) {
+  const {readBackupForThisBrowser} = await import('./transfer.js');
+  const bytes = Uint8Array.from(atob(encoded), character=>character.charCodeAt(0));
+  const archive = await readBackupForThisBrowser(new Blob([bytes]));
+  for (const [id,blob] of archive.blobs) {
+    if (!legacy.blobs.has(id)) legacy.blobs.set(id,blob);
+  }
+  for (const [path,value] of archive.docs) {
+    const current = legacy.docs.get(path);
+    if (!current) legacy.docs.set(path,value);
+    else if (path === 'state/todo') legacy.docs.set(path,{...value,...current});
+    else {
+      const existingTime = Date.parse(current.updatedAt || current.addedAt);
+      const backupTime = Date.parse(value.updatedAt || value.addedAt);
+      if (backupTime > existingTime) legacy.docs.set(path,value);
+    }
+  }
+}
+
 export async function importLegacy(text, user) {
   const bundle = JSON.parse(text);
   if (bundle.format !== 'nytrip-owner-migration-v1' || !bundle.trip?.id ||
       !Array.isArray(bundle.trip.itinerary?.days)) throw new Error('Unsupported bundle');
   const photosOnly = bundle.scope === 'photos';
   const legacy = await readLegacyDevice();
+  if (typeof bundle.encryptedBackup === 'string') await mergeBackup(legacy,bundle.encryptedBackup);
   const existingTrip = await getTrip(bundle.trip.id);
   const trip = existingTrip || await createTrip(bundle.trip);
   const store = await openTripStore(trip, user);

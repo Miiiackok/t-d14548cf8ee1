@@ -102,6 +102,13 @@ export async function unpack(file,key) {
   return {docs,blobs};
 }
 
+export async function readBackupForThisBrowser(file) {
+  const savedKey = localStorage.getItem('ny-key');
+  if (!savedKey) throw new Error('The original itinerary must be unlocked in this browser');
+  const raw = Uint8Array.from(atob(savedKey), character=>character.charCodeAt(0));
+  return unpack(file,await transferKey(raw));
+}
+
 async function merge(data) {
   const db = await openDb();
   try {
